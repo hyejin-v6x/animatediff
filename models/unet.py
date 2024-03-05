@@ -475,7 +475,7 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         return UNet3DConditionOutput(sample=sample)
 
     @classmethod
-    def from_pretrained_2d(cls, pretrained_model_path, subfolder=None, unet_additional_kwargs=None):
+    def from_pretrained_2d(cls, pretrained_model_path, subfolder=None, torch_dtype=torch.float32, unet_additional_kwargs=None):
         if subfolder is not None:
             pretrained_model_path = os.path.join(pretrained_model_path, subfolder)
         print(f"loaded 3D unet's pretrained weights from {pretrained_model_path} ...")
@@ -512,4 +512,6 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         params = [p.numel() if "motion_modules." in n else 0 for n, p in model.named_parameters()]
         print(f"### Motion Module Parameters: {sum(params) / 1e6} M")
         
-        return model.half()
+        if(torch_dtype == torch.float16):
+            model = model.half()
+        return model
