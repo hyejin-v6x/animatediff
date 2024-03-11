@@ -26,12 +26,10 @@ from diffusers.schedulers import (
 from diffusers.utils import deprecate, logging, BaseOutput
 
 from einops import rearrange
-import PIL.Image
 
 from ..models.unet import UNet3DConditionModel
 from ..models.sparse_controlnet import SparseControlNetModel
 import pdb
-
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -39,11 +37,10 @@ logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 @dataclass
 class AnimationPipelineOutput(BaseOutput):
     videos: Union[torch.Tensor, np.ndarray]
-    # frames: Union[List[List[PIL.Image.Image]], torch.Tensor, np.ndarray]
 
 
 class AnimationPipeline(DiffusionPipeline):
-    # _optional_components = []
+    _optional_components = []
     
     model_cpu_offload_seq = "text_encoder->image_encoder->unet->vae"
     _optional_components = ["feature_extractor", "image_encoder"]
@@ -124,7 +121,7 @@ class AnimationPipeline(DiffusionPipeline):
             controlnet=controlnet,
         )
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-        
+
     def enable_vae_slicing(self):
         self.vae.enable_slicing()
 
@@ -260,28 +257,6 @@ class AnimationPipeline(DiffusionPipeline):
         # we always cast to float32 as this does not cause significant overhead and is compatible with bfloa16
         video = video.cpu().float().numpy()
         return video
-    # def decode_latents(self, latents):
-    #     latents = 1 / self.vae.config.scaling_factor * latents
-
-    #     batch_size, channels, num_frames, height, width = latents.shape
-    #     latents = latents.permute(0, 2, 1, 3, 4).reshape(batch_size * num_frames, channels, height, width)
-
-    #     image = self.vae.decode(latents).sample
-    #     video = (
-    #         image[None, :]
-    #         .reshape(
-    #             (
-    #                 batch_size,
-    #                 num_frames,
-    #                 -1,
-    #             )
-    #             + image.shape[2:]
-    #         )
-    #         .permute(0, 2, 1, 3, 4)
-    #     )
-    #     # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-    #     video = video.float()
-    #     return video
 
     def prepare_extra_step_kwargs(self, generator, eta):
         # prepare extra kwargs for the scheduler step, since not all schedulers have the same signature
