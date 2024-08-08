@@ -158,7 +158,8 @@ def load_weights(
         
     # lora layers
     if lora_model_path != "":
-        auto_download(lora_model_path, is_dreambooth_lora=True)
+        if os.path.isfile(lora_model_path) == False:
+            auto_download(lora_model_path, is_dreambooth_lora=True)
 
         print(f"load lora model from {lora_model_path}")
         assert lora_model_path.endswith(".safetensors")
