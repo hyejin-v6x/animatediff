@@ -96,18 +96,15 @@ def adjust_dimensions(width, height, max_size=640):
     return new_width, new_height
 
 
-def get_controlnet_images(image_paths: str, vae=None, use_simplified_condition_embedding:bool=True, image_max_size=640):
+def get_controlnet_images(images: str, vae=None, use_simplified_condition_embedding:bool=True, image_max_size=640):
     import torch
     from einops import rearrange, repeat
     from PIL import Image
     import io
     import torchvision.transforms as transforms
 
-    if isinstance(image_paths, str): image_paths = [image_paths]
-    print(f"controlnet image paths:")
-    for path in image_paths: print(path)
-        
-    image = Image.open(image_paths[0]).convert("RGB")
+    print(f"controlnet images len:{len(images)}")        
+    image = images[0]
     width_prev, height_prev = image.size
     
     width, height = adjust_dimensions(width_prev, height_prev, max_size=image_max_size)
@@ -130,13 +127,13 @@ def get_controlnet_images(image_paths: str, vae=None, use_simplified_condition_e
             return image
     else: image_norm = lambda x: x
 
-    controlnet_images = [image_norm(image_transforms(Image.open(path).convert("RGB"))) for path in image_paths]
+    controlnet_images = [image_norm(image_transforms(img)) for img in images]
 
     os.makedirs(os.path.join(savedir, "control_images"), exist_ok=True)
     for i, image in enumerate(controlnet_images):
         Image.fromarray((255. * (image.numpy().transpose(1,2,0))).astype(np.uint8)).save(f"{savedir}/control_images/{i}.png")
 
-    controlnet_images = torch.stack(controlnet_images).unsqueeze(0).cuda()
+    controlnet_images = torch.stack(controlnet_images).unsqueeze(0).to("cuda")
     controlnet_images = rearrange(controlnet_images, "b f c h w -> b c f h w")
 
     if use_simplified_condition_embedding and vae is not None:
