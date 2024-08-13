@@ -38,7 +38,8 @@ def export_to_mp4(
     sample, output_mp4_path: str = None,
     fps: int = 7, 
     start: int = 0,
-    end = None
+    end = None,
+    reverse = False
 ) -> str:
     import imageio
     image = sample[0].permute(1, 2, 3, 0).cpu().numpy()
@@ -49,9 +50,17 @@ def export_to_mp4(
     for img in image:
         frame = (img * 255).astype(np.uint8) 
         writer.append_data(frame)
-    for img in image:
-        frame = (img * 255).astype(np.uint8) 
-        writer.append_data(frame)
+    if reverse:
+        for img in reversed(image[:-1]):
+            frame = (img * 255).astype(np.uint8) 
+            writer.append_data(frame)
+        for img in image[1:]:
+            frame = (img * 255).astype(np.uint8) 
+            writer.append_data(frame)
+    else:
+        for img in image:
+            frame = (img * 255).astype(np.uint8) 
+            writer.append_data(frame)
 
     writer.close()
 
