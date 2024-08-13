@@ -34,6 +34,25 @@ def sharp_image_pil(pil_img, factor=0):    # factor > 1은 선명하게, < 1은 
     return sharp_img
 
 
+def load_pil_image(file: str):
+    import requests
+    from PIL import Image
+    import io, base64
+    
+    if file.startswith("http"): # only for test_utils
+        response = requests.get(file)
+        pil_image = Image.open(io.BytesIO(response.content)).convert("RGB")
+    elif file.endswith(".png") or file.endswith(".jpg"):  # only for local testing
+        pil_image = Image.open(file).convert("RGB")
+    elif "base64" in file:  # base64 encoded image
+        file = file.split(",")[1]
+        pil_image = Image.open(io.BytesIO(base64.b64decode(file))).convert("RGB")
+    else: # consider as base64 encoded image without prefix
+        pil_image = Image.open(io.BytesIO(base64.b64decode(file))).convert("RGB")
+
+    return pil_image
+
+
 def export_to_mp4(
     sample, output_mp4_path: str = None,
     fps: int = 7, 
@@ -64,6 +83,36 @@ def export_to_mp4(
 
     writer.close()
 
+
+def export_pil_to_mp4(
+    sample, output_mp4_path: str = None,
+    fps: int = 7, 
+    start: int = 0,
+    end = None,
+    reverse = False
+) -> str:
+    import imageio
+    image = sample[start:end]
+    
+    writer = imageio.get_writer(output_mp4_path, fps=fps)
+    # Add each frame to the video (twice)
+    for img in image:
+        frame = np.array(img) 
+        writer.append_data(frame)
+    if reverse:
+        for img in reversed(image[:-1]):
+            frame = np.array(img)
+            writer.append_data(frame)
+        for img in image[1:]:
+            frame = np.array(img) 
+            writer.append_data(frame)
+    else:
+        for img in image:
+            frame = np.array(img)
+            writer.append_data(frame)
+
+    writer.close()
+    
 
 def convert_mp4_to_base64(file_path):
     with open(file_path, 'rb') as mp4_file:
